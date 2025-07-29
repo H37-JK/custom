@@ -48,13 +48,28 @@ jobs:
       # 6. Start Application in Background
       - name: Start Application
         run: |
-          java -jar build/libs/*.jar &
-          
+          # Redirect output to a log file to check for errors later
+          java -jar build/libs/*.jar > app.log 2>&1 &
+
       # 7. Wait for Application to be ready
       - name: Wait for Application
         run: |
           echo "Waiting for application to start..."
-          sleep 20
+          timeout=60
+          while ! curl -s http://localhost:8080/actuator/health | grep UP; do
+            if [ $timeout -le 0 ]; then
+              echo "Application failed to start within 60 seconds."
+              echo "--- Application Logs ---"
+              cat app.log
+              exit 1
+            fi
+            sleep 5
+            timeout=$((timeout-5))
+            echo "Still waiting... ($timeout s left)"
+          done
+          echo "Application started successfully!"
+          echo "--- Application Logs (last 50 lines) ---"
+          tail -n 50 app.log
           
       # 8. Run k6 Load Test
       # This step will fail if the k6 thresholds are not met, stopping the pipeline.
