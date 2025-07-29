@@ -128,7 +128,9 @@ task generateK6Scripts(dependsOn: test) {
                 def curlCommand = curlFile.text.replace('\$ ', '').replaceAll('(?m)^\\s*|\\s*$', '').replace(' \\', '')
 
                 def method = (curlCommand =~ /-X\\s+(\\w+)/).find() ? (curlCommand =~ /-X\\s+(\\w+)/)[0][1].toLowerCase() : 'get'
-                def url = (curlCommand =~ /'([^']*)'/).find() ? (curlCommand =~ /'([^']*)'/)[0][1] : ''
+
+                def baseUrl = System.getenv('K6_TARGET_HOST') ?: 'http://localhost:8080'
+                def path = (curlCommand =~ /'http:\/\/localhost:8080([^']*)'/).find() ? (curlCommand =~ /'http:\/\/localhost:8080([^']*)'/)[0][1] : ''
 
                 // Use backticks for the body to handle complex JSON strings safely
                 def bodyMatch = (curlCommand =~ /-d\\s+'([^']*)'/)
@@ -158,14 +160,14 @@ task generateK6Scripts(dependsOn: test) {
                 // Add test function
                 functions.add("""
                 export function ${functionName}() {
-                    const url = '${url}';
+                    const url = '${baseUrl}${path}';
                     const params = { headers: ${headers} };
                     const payload = ${body};
 
                     const res = ${k6HttpCall}
 
                     check(res, {
-                        'status is 200 on ${snippetDir.name}': (r) => r.status === 200,
+                        'status is 200 on ${snippetDir.name}': (r) => r.status == 200,
                     });
                 }
                 """.stripIndent())

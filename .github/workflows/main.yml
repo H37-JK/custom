@@ -45,10 +45,23 @@ jobs:
       - name: Build with Gradle and Generate Scripts
         run: ./gradlew build generateK6Scripts --info
 
-      # 6. Run k6 Load Test
+      # 6. Start Application in Background
+      - name: Start Application
+        run: |
+          java -jar build/libs/*.jar &
+          
+      # 7. Wait for Application to be ready
+      - name: Wait for Application
+        run: |
+          echo "Waiting for application to start..."
+          sleep 20
+          
+      # 8. Run k6 Load Test
       # This step will fail if the k6 thresholds are not met, stopping the pipeline.
       - name: Run k6 Load Test
         run: ./gradlew runK6LoadTest
+        env:
+          K6_TARGET_HOST: http://localhost:8080
 
 #      # 7. Deploy (This step only runs if the k6 test passes)
 #      - name: Deploy to Production
