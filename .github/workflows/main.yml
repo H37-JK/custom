@@ -16,6 +16,27 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
+    # Service containers to run with the job
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres:13
+        # Environment variables passed to the container
+        env:
+          POSTGRES_DB: hjk
+          POSTGRES_USER: hjk
+          POSTGRES_PASSWORD: star8903
+        # Set health checks to wait until postgres is ready
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps port 5432 on service container to the host
+          - 5432:5432
+
     steps:
       # 1. Checkout the repository code
       - name: Checkout repository
@@ -50,6 +71,11 @@ jobs:
         run: |
           # Redirect output to a log file to check for errors later
           java -jar build/libs/*.jar > app.log 2>&1 &
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/hjk
+          SPRING_DATASOURCE_USERNAME: hjk
+          SPRING_DATASOURCE_PASSWORD: star8903
+          SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
 
       # 7. Wait for Application to be ready
       - name: Wait for Application
