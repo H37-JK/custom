@@ -226,3 +226,9 @@ Caused by: java.net.ConnectException: Connection refused: getsockopt
 2025-07-29 15:36:58.080 [Test worker] [INFO] [logger{36}] - Initializing Servlet ''
 2025-07-29 15:36:58.083 [Test worker] [INFO] [logger{36}] - Completed initialization in 3 ms
 2025-07-29 15:36:58.131 [Test worker] [INFO] [logger{36}] - Started CustomApplicationTests in 3.352 seconds (process running for 5.35)
+2025-07-29 16:27:36.135 [File Watcher] [INFO] [logger{36}] - Restarting due to 2 class path changes (0 additions, 0 deletions, 2 modifications)
+2025-07-29 16:27:36.147 [Thread-1] [INFO] [logger{36}] - Commencing graceful shutdown. Waiting for active requests to complete
+2025-07-29 16:27:36.155 [tomcat-shutdown] [INFO] [logger{36}] - Graceful shutdown complete
+2025-07-29 16:27:36.198 [Thread-1] [INFO] [logger{36}] - Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-07-29 16:27:36.207 [Thread-1] [INFO] [logger{36}] - HikariPool-1 - Shutdown initiated...
+2025-07-29 16:27:36.214 [Thread-1] [INFO] [logger{36}] - HikariPool-1 - Shutdown completed.

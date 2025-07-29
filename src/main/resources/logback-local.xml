@@ -30,28 +30,28 @@
     </appender>
 
     <!-- Logstash Appender 설정 -->
-    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-        <destination>host.docker.internal:5000</destination>
-        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-            <providers>
-                <timestamp>
-                    <timeZone>UTC</timeZone>
-                </timestamp>
-                <pattern>
-                    <pattern>
-                        {
-                        "timestamp": "%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ}",
-                        "level": "%level",
-                        "logger": "%logger",
-                        "thread": "%thread",
-                        "message": "%msg",
-                        "stack_trace": "%ex"
-                        }
-                    </pattern>
-                </pattern>
-            </providers>
-        </encoder>
-    </appender>
+<!--    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">-->
+<!--        <destination>host.docker.internal:5000</destination>-->
+<!--        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">-->
+<!--            <providers>-->
+<!--                <timestamp>-->
+<!--                    <timeZone>UTC</timeZone>-->
+<!--                </timestamp>-->
+<!--                <pattern>-->
+<!--                    <pattern>-->
+<!--                        {-->
+<!--                        "timestamp": "%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ}",-->
+<!--                        "level": "%level",-->
+<!--                        "logger": "%logger",-->
+<!--                        "thread": "%thread",-->
+<!--                        "message": "%msg",-->
+<!--                        "stack_trace": "%ex"-->
+<!--                        }-->
+<!--                    </pattern>-->
+<!--                </pattern>-->
+<!--            </providers>-->
+<!--        </encoder>-->
+<!--    </appender>-->
 
     <!-- 로거 설정 -->
     <logger name="com.hjk" level="DEBUG" />
