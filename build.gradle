@@ -78,6 +78,10 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+tasks.named('jar') {
+    enabled = false
+}
+
 tasks.named('asciidoctor') {
     sourceDir 'src/main/docs/asciidoc'
     inputs.dir(snippetsDir)
@@ -94,10 +98,10 @@ tasks.named('asciidoctor') {
     }
 }
 
-
-tasks.named("build") {
-    dependsOn(tasks.named("asciidoctor"))
-}
+//
+//tasks.named("build") {
+//    dependsOn(tasks.named("asciidoctor"))
+//}
 
 // k6 부하 테스트 자동화를 위한 태스크
 task generateK6Scripts(dependsOn: test) {
