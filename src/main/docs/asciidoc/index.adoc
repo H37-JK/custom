@@ -1,0 +1,40 @@
+= API 문서
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 2
+:sectlinks:
+
+[[테스트API]]
+== 테스트 API
+
+
+**CURL 요청 예시**
+include::{snippets}/test-api/curl-request.adoc[]
+
+**HTTP 요청 예시**
+include::{snippets}/test-api/http-request.adoc[]
+
+**파라미터 요청 예시**
+include::{snippets}/test-api/path-parameters.adoc[]
+
+**응답 예시**
+include::{snippets}/test-api/http-response.adoc[]
+
+[[테스트API2]]
+== 테스트 API2
+
+
+**CURL 요청 예시**
+include::{snippets}/test-api2/curl-request.adoc[]
+
+**HTTP 요청 예시**
+include::{snippets}/test-api2/http-request.adoc[]
+
+**파라미터 요청 예시**
+include::{snippets}/test-api2/path-parameters.adoc[]
+
+**응답 예시**
+include::{snippets}/test-api/http-response.adoc[]
+
