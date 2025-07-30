@@ -67,8 +67,8 @@ jobs:
       # 7.애플리케이션 대기 & 헬스 체크
       - name: 애플리케이션 헬스 체크
         run: |
-          echo "Waiting for application to start..."
-          timeout=10
+          echo "애플리케이션 시작 대기.."
+          timeout=5
           while ! curl -s http://localhost:8080/actuator/health | grep UP; do
             if [ $timeout -le 0 ]; then
               echo "Application failed to start within 60 seconds."
@@ -78,9 +78,9 @@ jobs:
             fi
             sleep 5
             timeout=$((timeout-5))
-            echo "Still waiting... ($timeout s left)"
+            echo "대기중... ($timeout s left)"
           done
-          echo "Application started successfully!"
+          echo "애플리케이션 시작 성공!"
           echo "--- Application Logs (last 50 lines) ---"
           tail -n 50 app.log
 
@@ -112,15 +112,16 @@ jobs:
           name: app-jar
           path: build/libs
 
+      - name: Setup SSH Key
+        run: |
+          set -eu
+          mkdir -p ~/.ssh/
+          echo "${{ secrets.DEPLOY_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.DEPLOY_SERVER_HOST }}" >> ~/.ssh/known_hosts
+
       - name: Copy JAR to server via scp
-        uses: appleboy/scp-action@master
-        working-directory: build/libs
-        with:
-          host: ${{ secrets.DEPLOY_SERVER_HOST }}
-          username: ${{ secrets.DEPLOY_SERVER_USERNAME }}
-          key: ${{ secrets.DEPLOY_PRIVATE_KEY }}
-          source: "*.jar"
-          target: "/home/${{ secrets.DEPLOY_SERVER_USERNAME }}/app"
+        run: scp build/libs/*.jar ${{ secrets.DEPLOY_SERVER_USERNAME }}@${{ secrets.DEPLOY_SERVER_HOST }}:/home/${{ secrets.DEPLOY_SERVER_USERNAME }}/app/
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@master
