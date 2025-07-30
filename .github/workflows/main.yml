@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  build-and-test:
     runs-on: ubuntu-latest
 
     # 1.postgres 컨테이너 띄우기 
@@ -98,7 +98,7 @@ jobs:
 
   # 9. 테스트 성공시 배포 시작
   deploy:
-    needs: build-and-deploy
+    needs: build-and-test
     if: github.ref == 'refs/heads/main' && success()
     runs-on: ubuntu-latest
 
