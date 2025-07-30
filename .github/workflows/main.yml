@@ -121,7 +121,6 @@ jobs:
           key: ${{ secrets.DEPLOY_PRIVATE_KEY }}
           source: "*.jar"
           target: "/home/${{ secrets.DEPLOY_SERVER_USERNAME }}/app"
-        run:
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@master
