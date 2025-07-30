@@ -112,14 +112,16 @@ jobs:
           name: app-jar
           path: build/libs
 
+      - name: Setup SSH Key
+        run: |
+          set -eu
+          mkdir -p ~/.ssh/
+          echo "${{ secrets.DEPLOY_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.DEPLOY_SERVER_HOST }}" >> ~/.ssh/known_hosts
+
       - name: Copy JAR to server via scp
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.DEPLOY_SERVER_HOST }}
-          username: ${{ secrets.DEPLOY_SERVER_USERNAME }}
-          key: ${{ secrets.DEPLOY_PRIVATE_KEY }}
-          source: "build/libs/*.jar"
-          target: "/home/${{ secrets.DEPLOY_SERVER_USERNAME }}/app"
+        run: scp build/libs/*.jar ${{ secrets.DEPLOY_SERVER_USERNAME }}@${{ secrets.DEPLOY_SERVER_HOST }}:/home/${{ secrets.DEPLOY_SERVER_USERNAME }}/app/
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@master
