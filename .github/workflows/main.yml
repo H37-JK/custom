@@ -157,7 +157,12 @@ jobs:
             fi
 
             echo "Running new container..."
-            docker run -d --name $CONTAINER_NAME -p 8080:8080 "$IMAGE_NAME:$IMAGE_TAG"
+            docker run -d --name $CONTAINER_NAME -p 8080:8080 \
+              --add-host=host.docker.internal:host-gateway \
+              -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/hjk \
+              -e SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USER }} \
+              -e SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              "$IMAGE_NAME:$IMAGE_TAG"
             
             echo "Cleaning up old images..."
             docker image prune -f
