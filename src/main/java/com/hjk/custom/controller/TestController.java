@@ -10,7 +10,7 @@ public class TestController {
 
     @GetMapping(value = "/test/{name}")
     public ResponseEntity<String> test(@PathVariable String name) {
-        return ResponseEntity.ok(name);
+        return ResponseEntity.ok(name + "!!");
     }
 
     @GetMapping(value = "/test2/{name}")
