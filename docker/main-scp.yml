@@ -1,4 +1,4 @@
-name: 스프링 부트 CI/CD
+name: Spring Boot CI/CD with k6 Load Test
 
 on:
   push:
@@ -9,17 +9,21 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    # 1. MSSQL 컨테이너 띄우기
+    # 1.postgres 컨테이너 띄우기
     services:
-      mssql:
-        image: mcr.microsoft.com/mssql/server:2022-latest
+      postgres:
+        image: postgres:13
         env:
-          ACCEPT_EULA: "Y"
-          SA_PASSWORD: "a_Str0ng_Required_Password"
-          MSSQL_PID: "Developer"
-          MSSQL_DB: test
+          POSTGRES_DB: hjk
+          POSTGRES_USER: hjk
+          POSTGRES_PASSWORD: star8903
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
         ports:
-          - 1433:1433
+          - 5432:5432
 
     steps:
       - name: Checkout repository
@@ -49,24 +53,18 @@ jobs:
       - name: Build with Gradle and Generate Scripts
         run: ./gradlew build generateK6Scripts --info
 
-      # 6. MSSQL이 준비될 때까지 대기
-      - name: Wait for MSSQL
-        run: |
-          echo "Waiting for MSSQL to start..."
-          sleep 30 # MSSQL 컨테이너가 시작되는데 시간이 좀 걸립니다.
-
-      # 7. 스프링 부트 애플리케이션 시작
+      # 6. 스프링 부트 애플리케이션 시작
       - name: Start Application
         run: |
           # Redirect output to a log file to check for errors later
           java -jar build/libs/*.jar > app.log 2>&1 &
         env:
-          SPRING_DATASOURCE_URL: "jdbc:sqlserver://localhost:1433;databaseName=test;trustServerCertificate=true"
-          SPRING_DATASOURCE_USERNAME: "sa"
-          SPRING_DATASOURCE_PASSWORD: "a_Str0ng_Required_Password"
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/hjk
+          SPRING_DATASOURCE_USERNAME: hjk
+          SPRING_DATASOURCE_PASSWORD: star8903
           SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
 
-      # 8.애플리케이션 대기 & 헬스 체크
+      # 7.애플리케이션 대기 & 헬스 체크
       - name: Wait for Application
         run: |
           echo "Waiting for application to start..."
@@ -86,7 +84,7 @@ jobs:
           echo "--- Application Logs (last 50 lines) ---"
           tail -n 50 app.log
 
-      # 9.부하테스트 시작
+      # 8.부하테스트 시작
       - name: Run k6 Load Test
         run: ./gradlew runK6LoadTest
         env:
@@ -98,7 +96,7 @@ jobs:
           name: app-jar
           path: build/libs
 
-  # 10. 테스트 성공시 배포 시작
+  # 9. 테스트 성공시 배포 시작
   deploy:
     needs: build-and-test
     if: github.ref == 'refs/heads/main' && success()
@@ -160,6 +158,12 @@ jobs:
 
             echo "Starting new application from $JAR_FILE"
             
+            # 앱과 DB가 모두 호스트에 직접 설치되어 있으므로 localhost 사용
+            export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/hjk
+            export SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USER }}
+            export SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
+            
+            # nohup으로 백그라운드에서 애플리케이션 실행
             nohup java -jar $JAR_FILE > $LOG_FILE 2>&1 &
 
             echo "Deployment successful! Check logs at $LOG_FILE"

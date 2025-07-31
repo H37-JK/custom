@@ -1,0 +1,92 @@
+# .gitlab-ci.yml
+
+stages:
+  - build
+  - deploy
+
+build_and_test_job:
+  stage: build
+  image: openjdk:21-jdk
+
+  services:
+    - name: mcr.microsoft.com/mssql/server:2022-latest
+      alias: mssql-db
+
+  variables:
+    SPRING_DATASOURCE_URL: "jdbc:sqlserver://mssql-db:1433;databaseName=hjk;trustServerCertificate=true"
+    SPRING_DATASOURCE_USERNAME: "sa"
+    SPRING_DATASOURCE_PASSWORD: "a_Str0ng_Required_Password"
+    ACCEPT_EULA: "Y"
+    MSSQL_PID: "Developer"
+    MSSQL_DB: "hjk"
+
+  before_script:
+    - echo "Waiting for MSSQL to start..."
+    - sleep 10
+    # K6 설치
+    - apt-get update && apt-get install -y gpg
+    - mkdir -p /usr/share/keyrings
+    - gpg -k
+    - gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+    - mkdir -p /etc/apt/sources.list.d
+    - echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | tee /etc/apt/sources.list.d/k6.list
+    - apt-get update && apt-get install -y k6
+
+  script:
+    - chmod +x ./gradlew
+    - ./gradlew build generateK6Scripts --info
+    - java -jar build/libs/*.jar > app.log 2>&1 &
+    # 애플리케이션 헬스 체크
+    - echo "Waiting for application to start..."
+    - sleep 15
+    - curl -s http://localhost:8080/actuator/health | grep UP
+    # 부하 테스트 시작
+    - ./gradlew runK6LoadTest
+
+  artifacts:
+    paths:
+      - build/libs/
+
+deploy_job:
+  stage: deploy
+  image: ubuntu:latest
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+  # 스크립트 실행 전 준비 작업
+  before_script:
+    - apt-get update && apt-get install -y openssh-client
+    # SSH 키 설정
+    - eval $(ssh-agent -s)
+    - echo "$DEPLOY_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H "$DEPLOY_SERVER_HOST" >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+
+  # 실제 배포 스크립트
+  script:
+    - scp build/libs/*.jar ${DEPLOY_SERVER_USERNAME}@${DEPLOY_SERVER_HOST}:/home/${DEPLOY_SERVER_USERNAME}/app/
+    - >
+      ssh ${DEPLOY_SERVER_USERNAME}@${DEPLOY_SERVER_HOST} "
+        APP_DIR=/home/${DEPLOY_SERVER_USERNAME}/app;
+        JAR_FILE=\$(ls -t \$APP_DIR/*.jar | head -n 1);
+        LOG_FILE=\$APP_DIR/app.log;
+        PROCESS_NAME=\$(basename \$JAR_FILE);
+        
+        echo 'Looking for existing process...';
+        PID=\$(pgrep -f \$PROCESS_NAME);
+        if [ -n \"\$PID\" ]; then
+          echo 'Stopping process with PID: \$PID';
+          kill -15 \$PID;
+          sleep 5;
+        fi;
+        
+        echo 'Starting new application...';
+        export SPRING_DATASOURCE_URL='jdbc:sqlserver://localhost:1433;databaseName=hjk';
+        export SPRING_DATASOURCE_USERNAME='$DB_USER';
+        export SPRING_DATASOURCE_PASSWORD='$DB_PASSWORD';
+        # nohup java -jar \$JAR_FILE > \$LOG_FILE 2>&1 &
+        echo 'Deployment successful!';
+      "
